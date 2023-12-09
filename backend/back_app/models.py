@@ -19,18 +19,22 @@ class Post(models.Model):
         self.save()
 
 
-class CustomUser(AbstractUser):
-    kakao_user_id = models.CharField(max_length=255, unique=True)
-    kakao_access_token = models.CharField(max_length=255, blank=True, null=True)    # 로그인 토큰
-    kakao_nickname = models.CharField(max_length=100, blank=True, null=True)
+class User(models.Model):
+    email = models.TextField()
+    password = models.TextField()
+    name = models.TextField()
+    nickname = models.TextField()
+    create_at = models.DateTimeField()
+    update_at = models.DateTimeField()
+
+    def to_dto(self):
+        pass
 
     def __str__(self):
-        return self.kakao_nickname
+        return f"[{self.name}/{self.nickname}] -> {self.email}"
 
-    @classmethod
-    def create_kakao_user(cls, username, kakao_nickname, kakao_access_token):
-        user = cls(username=username, kakao_access_token=kakao_access_token, kakao_nickname=kakao_nickname)
-        user.set_password(kakao_access_token)
-        user.save()
-
-        return user
+class CustomUser(AbstractUser):
+    kakaonickname = models.CharField(max_length=30)
+    nickname = models.CharField(max_length=30, unique=True)
+    def __str__(self):
+        return str(self.nickname)

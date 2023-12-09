@@ -2,7 +2,7 @@
 # from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
-from .serializers import PostSerializer
+from ..serializers import PostSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -12,10 +12,10 @@ from rest_framework.response import Response
 # import json
 # from django.contrib.auth.decorators import login_required
 
-from .models import Post, CustomUser
+from ..models import Post, CustomUser
 import os
 from dotenv import load_dotenv
- 
+
 from django.shortcuts import render, redirect
 import requests
 
@@ -26,10 +26,12 @@ load_dotenv()
 class ListPost(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    
+
+
 class DetailPost(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+
 
 class IncreaseCount(APIView):
     def get(self, request, pk):
@@ -38,6 +40,7 @@ class IncreaseCount(APIView):
         post.save()
         serializer = PostSerializer(post)
         return Response(serializer.data)
+
 
 # @csrf_exempt
 # def kakao_login(request):
@@ -75,18 +78,12 @@ class IncreaseCount(APIView):
 #     return HttpResponse('Failed to authenticate with Kakao.')
 
 
-
-
-
-
-
-
-
 def kakaoLoginLogic(request):
     client_id = os.getenv('KAKAO_CLIENT_ID')  # 입력필요
     redirect_uri = os.getenv('KAKAO_REDIRECT_URI')
     _url = f'https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code'
     return redirect(_url)
+
 
 def kakaoLoginLogicRedirect(request):
     code = request.GET['code']
@@ -114,7 +111,6 @@ def kakaoLoginLogicRedirect(request):
             kakao_user_id=user_info['id'],
             kakao_nickname=user_info.get('properties', {}).get('nickname'),
             kakao_access_token=_result['access_token']
-
         )
 
     request.session['access_token'] = _result['access_token']
