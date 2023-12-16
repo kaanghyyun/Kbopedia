@@ -69,13 +69,11 @@ MIDDLEWARE = [
 AUTH_USER_MODEL = 'back_app.CustomUser'
 
 
-
-CORS_ALLOWED_ORIGINS = [
-     'http://localhost:3000'
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000'
 ]
-
-#CORS_ALLOW_ALL_ORIGINS = True
-#CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
 

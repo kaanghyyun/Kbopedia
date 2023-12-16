@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 # from django.utils import timezone
-
+from django.conf import settings
 # Create your models here.
 class Post(models.Model):
     title = models.CharField(max_length=200)
@@ -9,10 +9,12 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     count = models.IntegerField(default=0)
+    author = models.CharField(max_length=200)
 
     def __str__(self):
         """A string representations of the model."""    
         return self.title
+
 
     def increase_count(self):
         self.count += 1

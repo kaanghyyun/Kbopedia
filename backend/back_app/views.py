@@ -1,5 +1,6 @@
 # from django.shortcuts import render
 # from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from .serializers import PostSerializer
@@ -18,6 +19,7 @@ from dotenv import load_dotenv
  
 from django.shortcuts import render, redirect
 import requests
+from rest_framework.permissions import IsAuthenticated
 
 load_dotenv()
 
@@ -26,6 +28,7 @@ load_dotenv()
 class ListPost(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+
     
 class DetailPost(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
@@ -39,50 +42,8 @@ class IncreaseCount(APIView):
         serializer = PostSerializer(post)
         return Response(serializer.data)
 
-# @csrf_exempt
-# def kakao_login(request):
-#     # 카카오로부터 받은 인가 코드
-#     code = request.GET.get('code', None)
-#
-#     if code:
-#         # 토큰 요청을 위한 파라미터 설정
-#         params = {
-#             'grant_type': 'authorization_code',
-#             'client_id': os.getenv('KAKAO_CLIENT_ID'),
-#             'redirect_uri': os.getenv('KAKAO_REDIRECT_URI'),
-#             'code': code,
-#         }
-#
-#         # 토큰 요청 보내기
-#         response = requests.post('https://kauth.kakao.com/oauth/token', params=params)
-#         tokens = response.json()
-#
-#         # 사용자 정보 요청을 위한 헤더 설정
-#         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
-#
-#         # 사용자 정보 요청 보내기
-#         user_info_response = requests.get('https://kapi.kakao.com/v2/user/me', headers=headers)
-#         user_info = user_info_response.json()
-#
-#         # 카카오 계정과 연결된 사용자가 있는지 확인
-#         user, created = User.objects.get_or_create(username=user_info['id'])
-#
-#         # 사용자 로그인 처리
-#         login(request, user)
-#
-#         return HttpResponse(f'Hello, {user.username}!')
-#
-#     return HttpResponse('Failed to authenticate with Kakao.')
 
-
-
-
-
-
-
-
-
-def kakaoLoginLogic(request):
+def kakaoLoginLogic(request): # 프론트에서 구현 가능
     client_id = os.getenv('KAKAO_CLIENT_ID')  # 입력필요
     redirect_uri = os.getenv('KAKAO_REDIRECT_URI')
     _url = f'https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code'
@@ -96,14 +57,20 @@ def kakaoLoginLogicRedirect(request):
     _res = requests.post(_url)
     _result = _res.json()
     request.session['access_token'] = _result['access_token']
+    access_token = _result['access_token']
     request.session.modified = True
+    print(code)
+
 
     # 카카오 사용자 정보 가져오기
     user_info_url = 'https://kapi.kakao.com/v2/user/me'
     headers = {'Authorization': f'Bearer {_result["access_token"]}'}
     user_info_response = requests.get(user_info_url, headers=headers)
     user_info = user_info_response.json()
+    kakao_nickname = user_info.get('properties', {}).get('nickname')
+    user_id = user_info['id']
     print(user_info)
+
 
     user = CustomUser.objects.filter(kakao_user_id=user_info['id']).first()
 
@@ -120,10 +87,11 @@ def kakaoLoginLogicRedirect(request):
     request.session['access_token'] = _result['access_token']
     request.session.modified = True
 
-    # return redirect('/')
-    return redirect('http://localhost:3000')
-    # return JsonResponse({'success': True, 'message': 'Login successful', 'user_info': user_info})
+    response = JsonResponse({'success': True, 'message': 'Login successful', 'user_info': user_info})
+    response.set_cookie('session_token', _result['access_token'])
 
+    front_end_url = 'http://localhost:3000/LoginComponent'
+    return redirect(f'{front_end_url}?kakao_nickname={kakao_nickname}&access_token={access_token}&user_id={user_id}')
 
 def kakaoLogout(request):
     _token = request.session['access_token']
@@ -133,9 +101,22 @@ def kakaoLogout(request):
     }
     _res = requests.post(_url, headers=_header)
     _result = _res.json()
-    if _result.get('id'):
-        del request.session['access_token']
-        return render(request, 'loginoutSuccess.html')
 
-    else:
-        return render(request, 'logoutError.html')
+    # 세션을 제거
+    request.session.clear()
+
+    # return JsonResponse({'success': True, 'message': 'Logged out'})
+    return redirect('http://localhost:3000')
+
+def getUserInfo(request):
+    access_token = request.session.get('access_token')
+    if not access_token:
+        return JsonResponse({'error': 'No access token'}, status=401)
+
+    # 카카오 사용자 정보 가져오기
+    user_info_url = 'https://kapi.kakao.com/v2/user/me'
+    headers = {'Authorization': f'Bearer {access_token}'}
+    user_info_response = requests.get(user_info_url, headers=headers)
+    user_info = user_info_response.json()
+
+    return JsonResponse({'user_info': user_info})
