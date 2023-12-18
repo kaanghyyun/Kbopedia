@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Post
 
 class PostSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source='author.username', read_only=True)
+    # author = serializers.CharField(source='author.username', read_only=True)
     class Meta:
         model = Post
         fields = (
@@ -12,5 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'count',
-            'author'
+            'author',
+            'team',
+            'user_id',
         )

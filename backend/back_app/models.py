@@ -10,6 +10,8 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     count = models.IntegerField(default=0)
     author = models.CharField(max_length=200)
+    team = models.TextField()
+    user_id = models.CharField(max_length=200)
 
     def __str__(self):
         """A string representations of the model."""    
