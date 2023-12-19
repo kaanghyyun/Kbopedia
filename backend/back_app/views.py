@@ -1,11 +1,12 @@
 # from django.shortcuts import render
 # from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from django.shortcuts import get_object_or_404
 from .serializers import PostSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import views, generics
 
 # from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth import login
@@ -16,7 +17,7 @@ from rest_framework.response import Response
 from .models import Post, CustomUser
 import os
 from dotenv import load_dotenv
- 
+from django.db import models
 from django.shortcuts import render, redirect
 import requests
 from rest_framework.permissions import IsAuthenticated
@@ -59,7 +60,6 @@ def kakaoLoginLogicRedirect(request):
     request.session['access_token'] = _result['access_token']
     access_token = _result['access_token']
     request.session.modified = True
-    print(code)
 
 
     # 카카오 사용자 정보 가져오기
@@ -69,7 +69,6 @@ def kakaoLoginLogicRedirect(request):
     user_info = user_info_response.json()
     kakao_nickname = user_info.get('properties', {}).get('nickname')
     user_id = user_info['id']
-    print(user_info)
 
 
     user = CustomUser.objects.filter(kakao_user_id=user_info['id']).first()
@@ -91,7 +90,7 @@ def kakaoLoginLogicRedirect(request):
     response.set_cookie('session_token', _result['access_token'])
 
     front_end_url = 'http://localhost:3000/LoginComponent'
-    return redirect(f'{front_end_url}?kakao_nickname={kakao_nickname}&access_token={access_token}&user_id={user_id}')
+    return redirect(f'{front_end_url}?kakao_nickname={kakao_nickname}&code={code}&user_id={user_id}')
 
 def kakaoLogout(request):
     _token = request.session['access_token']
